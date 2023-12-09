@@ -47,12 +47,14 @@ export class ApplicationCommandManager {
     /**
      * Sync all application commands with the Discord API.
      */
-    async sync(guildId: string | undefined) {
+    async sync(guildIDs: string[] | undefined) {
         const commands = Array.from(this.#commands.values())
-        if (guildId) {
-            const guild = this.#bot.guilds.cache.get(guildId) ?? await this.#bot.guilds.fetch(guildId)
-            if (!guild) throw new Error('Invalid Guild ID provided in: ApplicationCommandManager#sync')
-            return await guild.commands.set(commands)
+        if (Array.isArray(guildIDs?.length)) {
+            guildIDs.forEach(async guildId => {
+                const guild = this.#bot.guilds.cache.get(guildId) ?? await this.#bot.guilds.fetch(guildId)
+                if (!guild) throw new Error('Invalid Guild ID provided in: ApplicationCommandManager#sync')
+                return await guild.commands.set(commands)
+            })
         } else return await this.#bot.application?.commands.set(commands)
     }
 }
