@@ -49,5 +49,14 @@ module.exports = {
 ## File structure for the previous example
 ![Structure](https://cdn.discordapp.com/attachments/996126408151683107/1183094673397522562/image.png?ex=658715c6&is=6574a0c6&hm=1bfcadad55f5d97f600078f4912ef50b89ad8dcb8f50d4403f6268c727dcad9e&)
 
+## Custom functions
+### $applicationCommandReload
+Reload application command specifications from a directory.
+> Usage: `$applicationCommandReload`
+
+### $applicationCommandSync
+Synces all loaded specifications into multiple guilds or bots if no args.
+> Usage: `$applicationCommandSync[...guildIDs?]`
+
 ## Documentation
 > [Link](https://cyberghxst.github.io/aoi-command-manager)

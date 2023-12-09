@@ -6,6 +6,8 @@ import { join } from 'path'
 export class ApplicationCommandManager {
     #bot: AoiClient & { slashCommandManager: ApplicationCommandManager }
     #commands: Collection<string, RESTPostAPIApplicationCommandsJSONBody>
+    #directory: string | null = null
+    #providing_cwd = false
     constructor(bot: AoiClient) {
         this.#bot = bot as any
         this.#commands = new Collection
@@ -40,6 +42,9 @@ export class ApplicationCommandManager {
         const root = providing_cwd ? '' : process.cwd()
         const files = await readdir(join(root, dir))
 
+        this.#directory = dir
+        this.#providing_cwd = providing_cwd
+
         for (const file of files) {
             const stat = await lstat(join(root, dir, file))
             if (stat.isDirectory()) {
@@ -73,6 +78,7 @@ export class ApplicationCommandManager {
      * Add ApplicationCommandManager plugins into AoiClient.
      */
     #addPlugins() {
+        // Sync commands function
         this.#bot.functionManager.createFunction({
             name: '$applicationCommandSync',
             type: 'djs',
@@ -98,5 +104,51 @@ export class ApplicationCommandManager {
                 }
             }
         } as any)
+
+        // Reload commands function.
+        this.#bot.functionManager.createFunction({
+            name: '$applicationCommandReload',
+            type: 'djs',
+            code: async (d: any) => {
+                const data = d.util.aoiFunc(d)
+                if (!(d.bot.slashCommandManager instanceof ApplicationCommandManager))
+                    return d.aoiError.fnError(d, 'custom', {
+                        inside: data.inside
+                    }, 'Cannot find an instance of ApplicationCommandManager!')
+
+                if (!d.bot.slashCommandManager.#directory) return d.aoiError.fnError(d, 'custom', {
+                    inside: data.inside
+                }, 'Cannot find an specification directory!')
+                
+                await (
+                    d.bot.slashCommandManager as ApplicationCommandManager
+                ).load(
+                    d.bot.slashCommandManager.directory,
+                    d.bot.slashCommandManager.cwd
+                ).then(() => {
+                    data.result = true
+                }).catch(() => {
+                    data.result = false
+                })
+
+                return {
+                    code: d.util.setCode(data)
+                }
+            }
+        } as any)
+    }
+
+    /**
+     * Command specifications directory.
+     */
+    get directory() {
+        return this.#directory
+    }
+
+    /**
+     * Returns "true" if the directory contains a custom cwd.
+     */
+    get cwd() {
+        return this.#providing_cwd
     }
 }
