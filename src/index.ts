@@ -116,9 +116,12 @@ export class ApplicationCommandManager {
                         inside: data.inside
                     }, 'Cannot find an instance of ApplicationCommandManager!')
 
-                if (!d.bot.slashCommandManager.#directory) return d.aoiError.fnError(d, 'custom', {
-                    inside: data.inside
-                }, 'Cannot find an specification directory!')
+                if (!d.bot.slashCommandManager.directory) return d.aoiError.fnError(
+                    d,
+                    'custom',
+                    {},
+                    'Cannot find an specification directory!'
+                )
                 
                 await (
                     d.bot.slashCommandManager as ApplicationCommandManager
