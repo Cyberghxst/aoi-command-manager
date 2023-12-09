@@ -1,7 +1,7 @@
 {
   "name": "aoi-command-manager",
   "version": "1.0.0",
-  "description": "",
+  "description": "An application command loader to sync your Slash Commands to the Discord API with ease.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
@@ -25,5 +25,9 @@
     "dotenv": "^16.3.1",
     "typedoc": "^0.25.4",
     "typescript": "^5.3.3"
+  },
+  "publishConfig": {
+    "tag": "latest",
+    "access": "public"
   }
 }
