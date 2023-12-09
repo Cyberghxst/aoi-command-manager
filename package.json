@@ -1,0 +1,29 @@
+{
+  "name": "aoi-command-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build:dist": "tsc -p tsconfig.json",
+    "build:docs": "typedoc"
+  },
+  "keywords": [
+    "slash-commands-manager",
+    "aoi.js",
+    "aoijs",
+    "slash-commands"
+  ],
+  "author": "Cyberghxst",
+  "license": "ISC",
+  "dependencies": {
+    "aoi.js": "^6.6.1",
+    "discord.js": "^14.14.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.4",
+    "dotenv": "^16.3.1",
+    "typedoc": "^0.25.4",
+    "typescript": "^5.3.3"
+  }
+}
