@@ -4,11 +4,14 @@ import type { AoiClient } from 'aoi.js'
 import { join } from 'path'
 
 export class ApplicationCommandManager {
-    #bot: AoiClient
+    #bot: AoiClient & { slashCommandManager: ApplicationCommandManager }
     #commands: Collection<string, RESTPostAPIApplicationCommandsJSONBody>
     constructor(bot: AoiClient) {
-        this.#bot = bot
+        this.#bot = bot as any
         this.#commands = new Collection
+
+        this.#bot.slashCommandManager = this
+        this.#addPlugins()
     }
 
     /**
@@ -18,6 +21,14 @@ export class ApplicationCommandManager {
     clearCommands() {
         this.#commands.clear()
         return this
+    }
+
+    /**
+     * Returns the number of cached commands.
+     * @returns {number}
+     */
+    commandSize() {
+        return this.#commands.size
     }
 
     /**
@@ -49,12 +60,43 @@ export class ApplicationCommandManager {
      */
     async sync(guildIDs: string[] | undefined) {
         const commands = Array.from(this.#commands.values())
-        if (Array.isArray(guildIDs?.length)) {
+        if (Array.isArray(guildIDs)) {
             guildIDs.forEach(async guildId => {
                 const guild = this.#bot.guilds.cache.get(guildId) ?? await this.#bot.guilds.fetch(guildId)
                 if (!guild) throw new Error('Invalid Guild ID provided in: ApplicationCommandManager#sync')
                 return await guild.commands.set(commands)
             })
         } else return await this.#bot.application?.commands.set(commands)
+    }
+
+    /**
+     * Add ApplicationCommandManager plugins into AoiClient.
+     */
+    #addPlugins() {
+        this.#bot.functionManager.createFunction({
+            name: '$applicationCommandSync',
+            type: 'djs',
+            code: async function(d: any) {
+                const data = d.util.aoiFunc(d)
+                const guildIDs = data.inside.splits
+
+                if (!(d.bot.slashCommandManager instanceof ApplicationCommandManager))
+                    return d.aoiError.fnError(d, 'custom', {
+                        inside: data.inside
+                    }, 'Cannot find an instance of ApplicationCommandManager!')
+                if (d.bot.slashCommandManager.commandSize() === 0)
+                    return d.aoiError.fnError(d, 'custom', {
+                        inside: data.inside
+                    }, 'Cannot sync empty commands!')
+
+                await (
+                    d.bot.slashCommandManager as ApplicationCommandManager
+                ).sync(guildIDs.length > 0 ? guildIDs : undefined)
+
+                return {
+                    code: d.util.setCode(data)
+                }
+            }
+        } as any)
     }
 }
