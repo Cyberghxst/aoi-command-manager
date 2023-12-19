@@ -1,7 +1,11 @@
 import { Collection, RESTPostAPIApplicationCommandsJSONBody, SlashCommandBuilder } from 'discord.js'
 import { lstat, readdir } from 'fs/promises'
-import type { AoiClient } from 'aoi.js'
+import type { AoiClient, AwaitCommand } from 'aoi.js'
 import { join } from 'path'
+
+interface ICommand extends AwaitCommand {
+    data: SlashCommandBuilder | Record<string, any>
+}
 
 export class ApplicationCommandManager {
     #bot: AoiClient & { slashCommandManager: ApplicationCommandManager }
@@ -33,6 +37,10 @@ export class ApplicationCommandManager {
         return this.#commands.size
     }
 
+    getCommands() {
+        return Array.from(this.#commands.values())
+    }
+
     /**
      * Load all application commands inside a directory.
      * @param dir - Application commands directory.
@@ -52,10 +60,18 @@ export class ApplicationCommandManager {
                 continue
             } else if (!file.endsWith('.js')) continue
             
-            const data = require(join(root, dir, file)).data as SlashCommandBuilder
-            if (!(data instanceof SlashCommandBuilder))
-                throw new Error('Invalid slash command specification in: ' + join(root, dir, file))
-            this.#commands.set(data.name, data.toJSON())
+            const data: ICommand | ICommand[] = require(join(root, dir, file))
+            if (Array.isArray(data)) {
+                for (const d of data) {
+                    if (d.data instanceof SlashCommandBuilder) {
+                        this.#commands.set(d.data.name, d.data.toJSON())
+                    } else this.#commands.set(d.data.name, d.data as any)
+                }
+            } else {
+                if (data.data instanceof SlashCommandBuilder) {
+                    this.#commands.set(data.data.name, data.data.toJSON())
+                } else this.#commands.set(data.data.name, data.data as any)
+            }
         }
 
     }
